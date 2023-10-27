@@ -3,7 +3,7 @@ import Slider from 'react-slick'
 import styled from 'styled-components'
 import _ from 'lodash'
 import { Row, themeObj } from 'src/components/elements/styled-components'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { m } from 'framer-motion'
 import { Button } from '@mui/material'
 import { varFade } from 'src/components/animate'
@@ -50,32 +50,42 @@ const PrevArrowStyle = styled.div`
     height: 1.5rem;
   }
   `
-const BannerImgContent = styled.div`
-display:flex;
-position: relative;
+const BannerImgContainer = styled.div`
 width: 78vw;
 height: 33.15vw;
-background-size: 100%;
-background-repeat: no-repeat;
-background-position: center;
+margin: 0 auto;
 border-radius:${props => props.img_list_length >= 2 ? '1rem' : '0'};
-animation: ${props => props.iscurrentSlideIndex ? 'zoom-in-out' : ''} 10s ease-in-out infinite;
-@keyframes zoom-in-out {
-    0% {
-        background-size: 100%;
-    }
-    50% {
-        background-size: 105%;
-    }
-    100% {
-        background-size: 100%;
-    }
-  }
+overflow: hidden;
 @media (max-width:1200px) {
     width: 100vw;
     height: 42.5vw;
     border-radius:0;
 }
+`
+const BannerImgContent = styled.div`
+width: 100%;
+height: 100%;
+position: absolute;
+top: 0;
+left: 0;
+display:flex;
+position: relative;
+background-size: cover;
+background-repeat: no-repeat;
+background-position: center center;
+animation: ${props => props.iscurrentSlideIndex ? 'zoom-in-out' : ''} 10s ease-in-out infinite;
+@keyframes zoom-in-out {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+    100% {
+        transform: scale(1);
+    }
+  }
+
 }
 `
 
@@ -136,6 +146,8 @@ const HomeBanner = (props) => {
     let { windowWidth } = data;
     const { style } = column;
     let img_list = [...column?.list];
+    const [arrowHeight, setArrowHeight] = useState('15vw')
+    const imageContainerRef = useRef();
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
     const afterChangeHandler = (currentSlide) => {
         setCurrentSlideIndex(currentSlide);
@@ -151,70 +163,82 @@ const HomeBanner = (props) => {
         slidesToShow: 1,
         slidesToScroll: 1,
         dots: true,
-        nextArrow: <NextArrow onClick />,
-        prevArrow: <PrevArrow onClick />,
+        nextArrow: <NextArrow onClick sx={{ top: arrowHeight }} />,
+        prevArrow: <PrevArrow onClick sx={{ top: arrowHeight }} />,
         afterChange: afterChangeHandler,
     }
     const fadeInUpVariants = {
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0 },
     };
+    useEffect(() => {
+        if (imageContainerRef.current?.clientHeight) {
+            setArrowHeight(`${imageContainerRef.current?.clientHeight / 2 - 16}px`)
+        }
+    }, [imageContainerRef.current])
     return (
         <>
-            <FullWrappers style={{ marginTop: `${style?.margin_top}px` }}>
+            <FullWrappers style={{ marginTop: `${style?.margin_top}px` }}
+                ref={imageContainerRef}
+            >
                 <Slider {...slide_setting}>
                     {img_list.map((item, idx) => (
                         <>
-                            <BannerImgContent
+                            <BannerImgContainer
+                                style={{ minHeight: `${style?.min_height}px` }}
                                 img_list_length={img_list.length}
-                                iscurrentSlideIndex={currentSlideIndex == idx}
-                                style={{
-                                    width: `${img_list.length >= 2 ? '' : '100vw'}`,
-                                    backgroundImage: `url(${item.src})`,
-                                    minHeight: `${style?.min_height}px`
-                                }}
                             >
-                                {currentSlideIndex == idx &&
-                                    <>
-                                        <TextContainer>
-                                            {item?.title &&
 
-                                                <m.div
-                                                    initial="hidden"
-                                                    animate="visible"
-                                                    variants={fadeInUpVariants}
-                                                >
-                                                    <SlideTitle style={{ color: `${item?.title_color ?? ""}` }}>
-                                                        {item?.title}
-                                                    </SlideTitle>
-                                                </m.div>
-                                            }
-                                            {item?.sub_title &&
-                                                <m.div
-                                                    initial="hidden"
-                                                    animate="visible"
-                                                    variants={fadeInUpVariants}>
-                                                    <SlideSubTitle style={{ color: `${item?.sub_title_color ?? ""}` }}>
-                                                        {item?.sub_title}
-                                                    </SlideSubTitle>
-                                                </m.div>
-                                            }
-                                            {item?.link &&
-                                                <m.div
-                                                    initial="hidden"
-                                                    animate="visible"
-                                                    variants={fadeInUpVariants}>
-                                                    <Button variant='outlined' onClick={() => {
-                                                        if (!is_manager) {
-                                                            window.location.href = item?.link;
-                                                        }
-                                                    }}>
-                                                        VIEW MORE
-                                                    </Button>
-                                                </m.div>}
-                                        </TextContainer>
-                                    </>}
-                            </BannerImgContent>
+                                <BannerImgContent
+                                    iscurrentSlideIndex={currentSlideIndex == idx}
+                                    style={{
+                                        width: `${img_list.length >= 2 ? '' : '100vw'}`,
+                                        backgroundImage: `url(${item.src})`,
+                                    }}
+                                >
+                                    {currentSlideIndex == idx &&
+                                        <>
+                                            <TextContainer>
+                                                {item?.title &&
+
+                                                    <m.div
+                                                        initial="hidden"
+                                                        animate="visible"
+                                                        variants={fadeInUpVariants}
+                                                    >
+                                                        <SlideTitle style={{ color: `${item?.title_color ?? ""}` }}>
+                                                            {item?.title}
+                                                        </SlideTitle>
+                                                    </m.div>
+                                                }
+                                                {item?.sub_title &&
+                                                    <m.div
+                                                        initial="hidden"
+                                                        animate="visible"
+                                                        variants={fadeInUpVariants}>
+                                                        <SlideSubTitle style={{ color: `${item?.sub_title_color ?? ""}` }}>
+                                                            {item?.sub_title}
+                                                        </SlideSubTitle>
+                                                    </m.div>
+                                                }
+                                                {item?.link &&
+                                                    <m.div
+                                                        initial="hidden"
+                                                        animate="visible"
+                                                        variants={fadeInUpVariants}>
+                                                        <Button variant='outlined' onClick={() => {
+                                                            if (!is_manager) {
+                                                                window.location.href = item?.link;
+                                                            }
+                                                        }}>
+                                                            VIEW MORE
+                                                        </Button>
+                                                    </m.div>}
+                                            </TextContainer>
+                                        </>}
+                                </BannerImgContent>
+                            </BannerImgContainer>
+
                         </>
                     ))}
                 </Slider>
