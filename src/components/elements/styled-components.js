@@ -6,6 +6,7 @@ import { Icon } from '@iconify/react'
 import { commarNumber } from 'src/utils/function'
 import { useRouter } from 'next/router'
 import { product_status_list } from 'src/data/status-data'
+import Slider from "react-slick";
 
 export const themeObj = {
   grey: {
